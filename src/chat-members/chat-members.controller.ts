@@ -6,11 +6,14 @@ import {
   NotFoundException,
   Param,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { ChatMember } from '@prisma/client';
+import { AuthGuard } from 'src/auth/auth.guard';
 import { ChatMembersService } from './chat-members.service';
 import { CreateChatMemberDto } from './dto/create-chat-member.dto';
 
+@UseGuards(AuthGuard)
 @Controller('api/chat-members')
 export class ChatMembersController {
   constructor(private readonly chatMembersService: ChatMembersService) {}
