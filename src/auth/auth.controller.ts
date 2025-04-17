@@ -7,6 +7,7 @@ import {
   Session,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
+import { SignUpDto } from 'src/auth/dto/sign-up.dto';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/sign-in.dto';
 
@@ -35,5 +36,12 @@ export class AuthController {
   signOut(@Session() session: any): void {
     // Remove session cookie
     session.destroy();
+  }
+
+  @Post('signup')
+  async signUp(@Body() signUpDto: SignUpDto): Promise<User> {
+    const user = await this.authService.signUp(signUpDto);
+
+    return user;
   }
 }
