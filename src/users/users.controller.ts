@@ -3,6 +3,7 @@ import {
   Get,
   NotFoundException,
   Param,
+  Session,
   UseGuards,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
@@ -19,6 +20,17 @@ export class UsersController {
     const response = await this.usersService.findAll();
 
     return response || [];
+  }
+
+  @Get('me')
+  async findMe(@Session() session: any): Promise<User> {
+    const userId: User['id'] = session.userId;
+    const response = await this.usersService.findOne(userId);
+
+    if (!response)
+      throw new NotFoundException(`User with ID ${userId} not found`);
+
+    return response;
   }
 
   @Get(':id')
