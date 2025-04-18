@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { ChatStatus } from '@prisma/client';
+import { ChatMessageStatus } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class ChatStatusesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findOne(id: ChatStatus['id']): Promise<ChatStatus | null> {
-    return await this.prisma.chatStatus.findUnique({
+  async findOne(
+    id: ChatMessageStatus['id'],
+  ): Promise<ChatMessageStatus | null> {
+    return await this.prisma.chatMessageStatus.findUnique({
       where: {
         id,
       },

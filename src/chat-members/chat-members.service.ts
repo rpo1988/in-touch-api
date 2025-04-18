@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ChatMember } from '@prisma/client';
+import { ChatListResponseDto } from 'src/chat-list/dto/chat-list-response.dto';
 import { ChatsService } from 'src/chats/chats.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UsersService } from 'src/users/users.service';
@@ -54,8 +55,75 @@ export class ChatMembersService {
     }
   }
 
-  async findAll(): Promise<ChatMember[]> {
-    return await this.prisma.chatMember.findMany();
+  async findAll(filter?: {
+    userId?: ChatMember['userId'];
+  }): Promise<ChatMember[]> {
+    return await this.prisma.chatMember.findMany(
+      filter
+        ? {
+            where: {
+              ...(filter.userId
+                ? {
+                    userId: filter.userId,
+                  }
+                : {}),
+            },
+          }
+        : undefined,
+    );
+  }
+
+  async findChatList(
+    userId: ChatMember['userId'],
+  ): Promise<ChatListResponseDto[]> {
+    const data = await this.prisma.chatMember.findMany({
+      where: { userId },
+      select: {
+        chat: {
+          select: {
+            id: true,
+            isGroup: true,
+            title: true,
+            chatMembers: {
+              select: {
+                user: {
+                  select: {
+                    id: true,
+                  },
+                },
+              },
+            },
+            chatMessages: {
+              select: {
+                id: true,
+                text: true,
+                createdAt: true,
+                user: { select: { id: true } },
+                chatMessageStatus: { select: { id: true } },
+              },
+              orderBy: { createdAt: 'desc' },
+              take: 1, // Último mensaje
+            },
+          },
+        },
+      },
+    });
+    const response: ChatListResponseDto[] = data.map((item) => ({
+      chat: {
+        id: item.chat.id,
+        isGroup: item.chat.isGroup,
+        title: item.chat.title,
+      },
+      members: item.chat.chatMembers.map((itemMember) => itemMember.user),
+      lastMessages: (item.chat.chatMessages || []).map((itemMessage) => ({
+        id: itemMessage.id,
+        text: itemMessage.text,
+        createdAt: itemMessage.createdAt,
+        user: itemMessage.user,
+        status: itemMessage.chatMessageStatus,
+      })),
+    }));
+    return response;
   }
 
   async findOne(id: ChatMember['id']): Promise<ChatMember | null> {

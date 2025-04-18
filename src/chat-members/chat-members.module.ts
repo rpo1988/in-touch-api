@@ -8,5 +8,6 @@ import { ChatMembersService } from './chat-members.service';
   imports: [UsersModule, ChatsModule],
   controllers: [ChatMembersController],
   providers: [ChatMembersService],
+  exports: [ChatMembersService],
 })
 export class ChatMembersModule {}

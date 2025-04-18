@@ -6,6 +6,7 @@ import { ChatMessagesModule } from './chat-messages/chat-messages.module';
 import { ChatsModule } from './chats/chats.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
+import { ChatListModule } from './chat-list/chat-list.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { UsersModule } from './users/users.module';
     ChatMembersModule,
     ChatMessagesModule,
     AuthModule,
+    ChatListModule,
   ],
   controllers: [],
   providers: [],
