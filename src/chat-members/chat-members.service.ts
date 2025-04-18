@@ -4,7 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ChatMember } from '@prisma/client';
-import { ChatListResponseDto } from 'src/chat-list/dto/chat-list-response.dto';
+import {
+  ChatListDetailResponseDto,
+  ChatListResponseDto,
+} from 'src/chat-list/dto/chat-list-response.dto';
 import { ChatsService } from 'src/chats/chats.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UsersService } from 'src/users/users.service';
@@ -123,6 +126,73 @@ export class ChatMembersService {
         status: itemMessage.chatMessageStatus,
       })),
     }));
+    return response;
+  }
+
+  async findChatListDetail(
+    chatId: ChatMember['chatId'],
+    userId: ChatMember['userId'],
+  ): Promise<ChatListDetailResponseDto> {
+    const data = await this.prisma.chatMember.findFirst({
+      where: {
+        chatId,
+        userId,
+      },
+      select: {
+        chat: {
+          select: {
+            id: true,
+            isGroup: true,
+            title: true,
+            description: true,
+            createdAt: true,
+            updatedAt: true,
+            chatMembers: {
+              select: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    statusInfo: true,
+                  },
+                },
+              },
+            },
+            chatMessages: {
+              select: {
+                id: true,
+                text: true,
+                createdAt: true,
+                user: { select: { id: true, name: true } },
+                chatMessageStatus: { select: { id: true, name: true } },
+              },
+              orderBy: { createdAt: 'asc' },
+            },
+          },
+        },
+      },
+    });
+
+    if (!data) throw new NotFoundException(`Chat with ID ${chatId} not found`);
+
+    const response: ChatListDetailResponseDto = {
+      chat: {
+        id: data.chat.id,
+        isGroup: data.chat.isGroup,
+        title: data.chat.title,
+        description: data.chat.description,
+        createdAt: data.chat.createdAt,
+        updatedAt: data.chat.updatedAt,
+      },
+      members: data.chat.chatMembers.map((itemMember) => itemMember.user),
+      lastMessages: (data.chat.chatMessages || []).map((itemMessage) => ({
+        id: itemMessage.id,
+        text: itemMessage.text,
+        createdAt: itemMessage.createdAt,
+        user: itemMessage.user,
+        status: itemMessage.chatMessageStatus,
+      })),
+    };
     return response;
   }
 

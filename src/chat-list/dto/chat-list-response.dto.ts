@@ -8,3 +8,12 @@ export class ChatListResponseDto {
     status: Pick<ChatMessageStatus, 'id'>;
   })[];
 }
+
+export class ChatListDetailResponseDto {
+  chat: Chat;
+  members: Pick<User, 'id' | 'name' | 'statusInfo'>[];
+  lastMessages: (Pick<ChatMessage, 'id' | 'text' | 'createdAt'> & {
+    user: Pick<User, 'id' | 'name'>;
+    status: ChatMessageStatus;
+  })[];
+}
