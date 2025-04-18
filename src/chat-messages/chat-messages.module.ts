@@ -9,5 +9,6 @@ import { ChatMessagesService } from './chat-messages.service';
   imports: [UsersModule, ChatsModule],
   controllers: [ChatMessagesController],
   providers: [ChatMessagesService, ChatStatusesService],
+  exports: [ChatMessagesService],
 })
 export class ChatMessagesModule {}

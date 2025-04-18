@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsString } from 'class-validator';
+import { ChatMessageStatusId } from 'src/common/enums/chat-messages.enum';
 
 export class CreateChatMessageDto {
   @IsString()
@@ -11,7 +12,7 @@ export class CreateChatMessageDto {
 
   @IsString()
   @IsNotEmpty()
-  statusId: string;
+  statusId: ChatMessageStatusId;
 
   @IsString()
   @IsNotEmpty()
