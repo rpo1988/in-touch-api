@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  NotFoundException,
   Param,
   Post,
   Session,
@@ -14,6 +16,7 @@ import {
   ChatListResponseDto,
 } from 'src/chat-list/dto/chat-list-response.dto';
 import { CreateChatListMessageDto } from 'src/chat-list/dto/create-chat-list-message.dto';
+import { CreateChatListDto } from 'src/chat-list/dto/create-chat-list.dto';
 import { ChatListService } from './chat-list.service';
 
 @UseGuards(AuthGuard)
@@ -40,6 +43,20 @@ export class ChatListController {
     return response;
   }
 
+  @Post()
+  async createChat(
+    @Body() createChatListDto: CreateChatListDto,
+    @Session() session: any,
+  ): Promise<Chat> {
+    const userId: User['id'] = session.userId;
+    const response = await this.chatListService.createChat(
+      createChatListDto,
+      userId,
+    );
+
+    return response;
+  }
+
   @Post(':id/messages')
   async sendMessage(
     @Body() createChatListMessageDto: CreateChatListMessageDto,
@@ -55,5 +72,44 @@ export class ChatListController {
     );
 
     return response;
+  }
+
+  @Delete(':id')
+  async deleteChat(
+    @Param('id') chatId: Chat['id'],
+    @Session() session: any,
+  ): Promise<Pick<Chat, 'id'>> {
+    const userId: User['id'] = session.userId;
+    const response = await this.chatListService.deleteChat(chatId, userId);
+
+    if (!response)
+      throw new NotFoundException(`Chat with ID ${chatId} not found`);
+
+    return {
+      id: chatId,
+    };
+  }
+
+  @Delete(':id/messages/:messageId')
+  async deleteMessage(
+    @Param('id') chatId: Chat['id'],
+    @Param('messageId') messageId: ChatMessage['id'],
+    @Session() session: any,
+  ): Promise<Pick<ChatMessage, 'id'>> {
+    const userId: User['id'] = session.userId;
+    const response = await this.chatListService.deleteMessage(
+      messageId,
+      chatId,
+      userId,
+    );
+
+    if (!response)
+      throw new NotFoundException(
+        `Chat message with ID ${messageId} not found`,
+      );
+
+    return {
+      id: messageId,
+    };
   }
 }

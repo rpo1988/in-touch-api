@@ -3,6 +3,7 @@ import {
   Get,
   NotFoundException,
   Param,
+  Query,
   Session,
   UseGuards,
 } from '@nestjs/common';
@@ -16,8 +17,13 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  async findAll(): Promise<User[]> {
-    const response = await this.usersService.findAll();
+  async findAll(
+    @Query('excludeMe') excludeMe: string,
+    @Session() session: any,
+  ): Promise<User[]> {
+    const isExcludeMe = excludeMe === 'true' || excludeMe === '1';
+    const userId: User['id'] = session.userId;
+    const response = await this.usersService.findAll(isExcludeMe, userId);
 
     return response || [];
   }

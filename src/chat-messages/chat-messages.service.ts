@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ChatMessage } from '@prisma/client';
+import { ChatMessage, Prisma } from '@prisma/client';
 import { ChatStatusesService } from 'src/chat-messages/chat-statuses.service';
 import { CreateChatMessageDto } from 'src/chat-messages/dto/create-chat-message.dto';
 import { ChatsService } from 'src/chats/chats.service';
@@ -61,12 +61,12 @@ export class ChatMessagesService {
     });
   }
 
-  async remove(id: ChatMessage['id']): Promise<ChatMessage | null> {
+  async remove(
+    where: Prisma.ChatMessageWhereUniqueInput,
+  ): Promise<ChatMessage | null> {
     try {
       return await this.prisma.chatMessage.delete({
-        where: {
-          id,
-        },
+        where,
       });
     } catch (error) {
       if (error.code === 'P2025') {

@@ -1,6 +1,5 @@
 import {
   IsBoolean,
-  IsNotEmpty,
   IsOptional,
   IsString,
   MaxLength,
@@ -9,7 +8,6 @@ import {
 
 export class CreateChatDto {
   @IsBoolean()
-  @IsNotEmpty()
   isGroup: boolean;
 
   @IsString()

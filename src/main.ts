@@ -14,9 +14,9 @@ async function bootstrap() {
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // Solo secure en producción
-        sameSite: 'strict',
-        maxAge: 2 * 60 * 60 * 1000, // 2 horas
+        secure: false,
+        sameSite: 'lax',
+        maxAge: 24 * 60 * 60 * 1000, // 1 día
       },
     }),
   );
@@ -25,6 +25,14 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
   );
+
+  // Habilitar CORS
+  app.enableCors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000', // Origen permitido (frontend)
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS', // Métodos HTTP permitidos
+    allowedHeaders: 'Content-Type, Authorization', // Cabeceras permitidas
+    credentials: true, // Permitir cookies y credenciales
+  });
 
   await app.listen(process.env.PORT ?? 3001);
 }

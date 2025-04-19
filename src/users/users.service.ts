@@ -6,8 +6,9 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(): Promise<User[]> {
-    return await this.prisma.user.findMany();
+  async findAll(excludeMe: boolean, userId: User['id']): Promise<User[]> {
+    const response = await this.prisma.user.findMany();
+    return excludeMe ? response.filter((item) => item.id !== userId) : response;
   }
 
   async findOne(id: User['id']): Promise<User | null> {

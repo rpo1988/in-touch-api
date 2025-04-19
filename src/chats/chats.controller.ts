@@ -42,11 +42,13 @@ export class ChatsController {
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: Chat['id']): Promise<Chat['id']> {
-    const response = await this.chatsService.remove(id);
+  async remove(@Param('id') id: Chat['id']): Promise<Pick<Chat, 'id'>> {
+    const response = await this.chatsService.remove({
+      id,
+    });
 
     if (!response) throw new NotFoundException(`Chat with ID ${id} not found`);
 
-    return response.id;
+    return { id };
   }
 }

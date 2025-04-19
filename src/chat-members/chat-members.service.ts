@@ -87,11 +87,13 @@ export class ChatMembersService {
             id: true,
             isGroup: true,
             title: true,
+            createdAt: true,
             chatMembers: {
               select: {
                 user: {
                   select: {
                     id: true,
+                    name: true,
                   },
                 },
               },
@@ -116,6 +118,7 @@ export class ChatMembersService {
         id: item.chat.id,
         isGroup: item.chat.isGroup,
         title: item.chat.title,
+        createdAt: item.chat.createdAt,
       },
       members: item.chat.chatMembers.map((itemMember) => itemMember.user),
       lastMessages: (item.chat.chatMessages || []).map((itemMessage) => ({
