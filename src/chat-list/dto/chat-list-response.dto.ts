@@ -11,7 +11,7 @@ export class ChatListResponseDto {
 
 export class ChatListDetailResponseDto {
   chat: Chat;
-  members: Pick<User, 'id' | 'name' | 'statusInfo'>[];
+  members: Pick<User, 'id' | 'name' | 'username' | 'statusInfo'>[];
   lastMessages: (Pick<ChatMessage, 'id' | 'text' | 'createdAt'> & {
     user: Pick<User, 'id' | 'name'>;
     status: ChatMessageStatus;

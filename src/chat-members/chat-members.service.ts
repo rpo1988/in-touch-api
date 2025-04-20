@@ -156,6 +156,7 @@ export class ChatMembersService {
                   select: {
                     id: true,
                     name: true,
+                    username: true,
                     statusInfo: true,
                   },
                 },
