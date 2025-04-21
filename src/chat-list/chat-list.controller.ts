@@ -17,12 +17,16 @@ import {
 } from 'src/chat-list/dto/chat-list-response.dto';
 import { CreateChatListMessageDto } from 'src/chat-list/dto/create-chat-list-message.dto';
 import { CreateChatListDto } from 'src/chat-list/dto/create-chat-list.dto';
+import { ChatListSocketService } from 'src/chat-list/socket.service';
 import { ChatListService } from './chat-list.service';
 
 @UseGuards(AuthGuard)
 @Controller('api/chat-list')
 export class ChatListController {
-  constructor(private readonly chatListService: ChatListService) {}
+  constructor(
+    private readonly chatListService: ChatListService,
+    private readonly chatListSocketService: ChatListSocketService,
+  ) {}
 
   @Get()
   async findAll(@Session() session: any): Promise<ChatListResponseDto[]> {
@@ -53,7 +57,6 @@ export class ChatListController {
       createChatListDto,
       userId,
     );
-
     return response;
   }
 
@@ -65,11 +68,16 @@ export class ChatListController {
   ): Promise<ChatMessage> {
     const { text } = createChatListMessageDto;
     const userId: User['id'] = session.userId;
+
+    // Persisto en BBDD
     const response = await this.chatListService.sendMessage(
       text,
       chatId,
       userId,
     );
+
+    // Emito por Socket
+    this.chatListSocketService.emitMessage(response, chatId, userId);
 
     return response;
   }

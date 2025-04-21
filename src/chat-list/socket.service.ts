@@ -1,0 +1,20 @@
+import { Injectable } from '@nestjs/common';
+import { ChatMessage } from '@prisma/client';
+import { Server } from 'socket.io';
+import { SocketGateway } from 'src/chat-list/socket.gateway';
+
+@Injectable()
+export class ChatListSocketService {
+  constructor(private readonly socketGateway: SocketGateway) {}
+
+  emitMessage(payload: ChatMessage, chatId: string, excludeUserId?: string) {
+    const server: Server = this.socketGateway.server;
+    const excludeClientId = excludeUserId
+      ? this.socketGateway.userClientMap.get(excludeUserId)
+      : undefined;
+    server
+      .to(chatId)
+      .except(excludeClientId || '')
+      .emit('message', payload);
+  }
+}
