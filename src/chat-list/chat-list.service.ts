@@ -39,15 +39,15 @@ export class ChatListService {
   async createChat(
     createChatListDto: CreateChatListDto,
     userId: User['id'],
-  ): Promise<Chat> {
+  ): Promise<ChatListResponseDto> {
     if (!createChatListDto.memberIds.some((memberId) => memberId === userId)) {
       createChatListDto.memberIds.push(userId);
     }
-    const response = await this.chatsService.createWithMembers(
+    const { id } = await this.chatsService.createWithMembers(
       createChatListDto,
       userId,
     );
-
+    const response = await this.findOne(id, userId);
     return response;
   }
 

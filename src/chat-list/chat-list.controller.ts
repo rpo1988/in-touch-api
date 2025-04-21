@@ -47,7 +47,7 @@ export class ChatListController {
   async createChat(
     @Body() createChatListDto: CreateChatListDto,
     @Session() session: any,
-  ): Promise<Chat> {
+  ): Promise<ChatListResponseDto> {
     const userId: User['id'] = session.userId;
     const response = await this.chatListService.createChat(
       createChatListDto,
