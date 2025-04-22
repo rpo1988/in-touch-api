@@ -10,7 +10,10 @@ import {
 import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
-  cors: { origin: process.env.FRONTEND_URL || '*' },
+  cors: {
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+  },
   namespace: 'chat',
 })
 export class SocketGateway
