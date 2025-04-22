@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -7,24 +11,41 @@ export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(excludeMe: boolean, userId: User['id']): Promise<User[]> {
-    const response = await this.prisma.user.findMany();
-    return excludeMe ? response.filter((item) => item.id !== userId) : response;
+    try {
+      const response = await this.prisma.user.findMany();
+      return excludeMe
+        ? response.filter((item) => item.id !== userId)
+        : response;
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException();
+    }
   }
 
   async findOne(id: User['id']): Promise<User | null> {
-    return await this.prisma.user.findUnique({
-      where: {
-        id,
-      },
-    });
+    try {
+      return await this.prisma.user.findUnique({
+        where: {
+          id,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException();
+    }
   }
 
   async findOneByUsername(username: User['username']): Promise<User | null> {
-    return await this.prisma.user.findUnique({
-      where: {
-        username,
-      },
-    });
+    try {
+      return await this.prisma.user.findUnique({
+        where: {
+          username,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException();
+    }
   }
 
   async create(
@@ -39,11 +60,12 @@ export class UsersService {
         },
       });
     } catch (error) {
+      console.error(error);
       if (error.code === 'P2002') {
         // Error de unicidad en Prisma
         throw new ConflictException('Username already exists');
       }
-      throw error;
+      throw new InternalServerErrorException();
     }
   }
 }

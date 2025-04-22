@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ChatMessageStatus } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -9,10 +9,15 @@ export class ChatStatusesService {
   async findOne(
     id: ChatMessageStatus['id'],
   ): Promise<ChatMessageStatus | null> {
-    return await this.prisma.chatMessageStatus.findUnique({
-      where: {
-        id,
-      },
-    });
+    try {
+      return await this.prisma.chatMessageStatus.findUnique({
+        where: {
+          id,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException();
+    }
   }
 }

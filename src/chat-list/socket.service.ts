@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ChatMessage } from '@prisma/client';
 import { Server } from 'socket.io';
 import { SocketGateway } from 'src/chat-list/socket.gateway';
@@ -7,14 +7,23 @@ import { SocketGateway } from 'src/chat-list/socket.gateway';
 export class ChatListSocketService {
   constructor(private readonly socketGateway: SocketGateway) {}
 
-  emitMessage(payload: ChatMessage, chatId: string, excludeUserId?: string) {
-    const server: Server = this.socketGateway.server;
-    const excludeClientId = excludeUserId
-      ? this.socketGateway.userClientMap.get(excludeUserId)
-      : undefined;
-    server
-      .to(chatId)
-      .except(excludeClientId || '')
-      .emit('message', payload);
+  emitMessage(
+    payload: ChatMessage,
+    chatId: string,
+    excludeUserId?: string,
+  ): void {
+    try {
+      const server: Server = this.socketGateway.server;
+      const excludeClientId = excludeUserId
+        ? this.socketGateway.userClientMap.get(excludeUserId)
+        : undefined;
+      server
+        .to(chatId)
+        .except(excludeClientId || '')
+        .emit('message', payload);
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException();
+    }
   }
 }

@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { ChatMember } from '@prisma/client';
@@ -50,86 +51,97 @@ export class ChatMembersService {
         },
       });
     } catch (error) {
+      console.error(error);
       if (error.code === 'P2002') {
         // Error de unicidad en Prisma
         throw new ConflictException('User is already a member of this chat');
       }
-      throw error;
+      throw new InternalServerErrorException();
     }
   }
 
   async findAll(filter?: {
     userId?: ChatMember['userId'];
   }): Promise<ChatMember[]> {
-    return await this.prisma.chatMember.findMany(
-      filter
-        ? {
-            where: {
-              ...(filter.userId
-                ? {
-                    userId: filter.userId,
-                  }
-                : {}),
-            },
-          }
-        : undefined,
-    );
+    try {
+      return await this.prisma.chatMember.findMany(
+        filter
+          ? {
+              where: {
+                ...(filter.userId
+                  ? {
+                      userId: filter.userId,
+                    }
+                  : {}),
+              },
+            }
+          : undefined,
+      );
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException();
+    }
   }
 
   async findChatList(
     userId: ChatMember['userId'],
   ): Promise<ChatListResponseDto[]> {
-    const data = await this.prisma.chatMember.findMany({
-      where: { userId },
-      select: {
-        chat: {
-          select: {
-            id: true,
-            isGroup: true,
-            title: true,
-            createdAt: true,
-            chatMembers: {
-              select: {
-                user: {
-                  select: {
-                    id: true,
-                    name: true,
+    try {
+      const data = await this.prisma.chatMember.findMany({
+        where: { userId },
+        select: {
+          chat: {
+            select: {
+              id: true,
+              isGroup: true,
+              title: true,
+              createdAt: true,
+              chatMembers: {
+                select: {
+                  user: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
                   },
                 },
               },
-            },
-            chatMessages: {
-              select: {
-                id: true,
-                text: true,
-                createdAt: true,
-                user: { select: { id: true } },
-                chatMessageStatus: { select: { id: true } },
+              chatMessages: {
+                select: {
+                  id: true,
+                  text: true,
+                  createdAt: true,
+                  user: { select: { id: true } },
+                  chatMessageStatus: { select: { id: true } },
+                },
+                orderBy: { createdAt: 'desc' },
+                take: 1, // Último mensaje
               },
-              orderBy: { createdAt: 'desc' },
-              take: 1, // Último mensaje
             },
           },
         },
-      },
-    });
-    const response: ChatListResponseDto[] = data.map((item) => ({
-      chat: {
-        id: item.chat.id,
-        isGroup: item.chat.isGroup,
-        title: item.chat.title,
-        createdAt: item.chat.createdAt,
-      },
-      members: item.chat.chatMembers.map((itemMember) => itemMember.user),
-      lastMessages: (item.chat.chatMessages || []).map((itemMessage) => ({
-        id: itemMessage.id,
-        text: itemMessage.text,
-        createdAt: itemMessage.createdAt,
-        user: itemMessage.user,
-        status: itemMessage.chatMessageStatus,
-      })),
-    }));
-    return response;
+      });
+      const response: ChatListResponseDto[] = data.map((item) => ({
+        chat: {
+          id: item.chat.id,
+          isGroup: item.chat.isGroup,
+          title: item.chat.title,
+          createdAt: item.chat.createdAt,
+        },
+        members: item.chat.chatMembers.map((itemMember) => itemMember.user),
+        lastMessages: (item.chat.chatMessages || []).map((itemMessage) => ({
+          id: itemMessage.id,
+          text: itemMessage.text,
+          createdAt: itemMessage.createdAt,
+          user: itemMessage.user,
+          status: itemMessage.chatMessageStatus,
+        })),
+      }));
+      return response;
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException();
+    }
   }
 
   async findChatListDetail(
@@ -201,11 +213,16 @@ export class ChatMembersService {
   }
 
   async findOne(id: ChatMember['id']): Promise<ChatMember | null> {
-    return await this.prisma.chatMember.findUnique({
-      where: {
-        id,
-      },
-    });
+    try {
+      return await this.prisma.chatMember.findUnique({
+        where: {
+          id,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException();
+    }
   }
 
   async remove(id: ChatMember['id']): Promise<ChatMember | null> {
@@ -216,11 +233,12 @@ export class ChatMembersService {
         },
       });
     } catch (error) {
+      console.error(error);
       if (error.code === 'P2025') {
         // Registro no encontrado
         return null;
       }
-      throw error;
+      throw new InternalServerErrorException();
     }
   }
 }

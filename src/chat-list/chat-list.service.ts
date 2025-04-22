@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Chat, ChatMessage, User } from '@prisma/client';
 import { CreateChatListDto } from 'src/chat-list/dto/create-chat-list.dto';
 import { ChatMembersService } from 'src/chat-members/chat-members.service';
@@ -19,36 +19,45 @@ export class ChatListService {
   ) {}
 
   async findAll(userId: User['id']): Promise<ChatListResponseDto[]> {
-    const response = await this.chatMembersService.findChatList(userId);
-
-    return response;
+    try {
+      return await this.chatMembersService.findChatList(userId);
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException();
+    }
   }
 
   async findOne(
     chatId: Chat['id'],
     userId: User['id'],
   ): Promise<ChatListDetailResponseDto> {
-    const response = await this.chatMembersService.findChatListDetail(
-      chatId,
-      userId,
-    );
-
-    return response;
+    try {
+      return await this.chatMembersService.findChatListDetail(chatId, userId);
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException();
+    }
   }
 
   async createChat(
     createChatListDto: CreateChatListDto,
     userId: User['id'],
   ): Promise<ChatListResponseDto> {
-    if (!createChatListDto.memberIds.some((memberId) => memberId === userId)) {
-      createChatListDto.memberIds.push(userId);
+    try {
+      if (
+        !createChatListDto.memberIds.some((memberId) => memberId === userId)
+      ) {
+        createChatListDto.memberIds.push(userId);
+      }
+      const { id } = await this.chatsService.createWithMembers(
+        createChatListDto,
+        userId,
+      );
+      return await this.findOne(id, userId);
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException();
     }
-    const { id } = await this.chatsService.createWithMembers(
-      createChatListDto,
-      userId,
-    );
-    const response = await this.findOne(id, userId);
-    return response;
   }
 
   async sendMessage(
@@ -56,30 +65,38 @@ export class ChatListService {
     chatId: Chat['id'],
     userId: User['id'],
   ): Promise<ChatMessage> {
-    const response = await this.chatMessagesService.create({
-      chatId,
-      userId,
-      text,
-      statusId: ChatMessageStatusId.STORED,
-    });
-
-    return response;
+    try {
+      return await this.chatMessagesService.create({
+        chatId,
+        userId,
+        text,
+        statusId: ChatMessageStatusId.STORED,
+      });
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException();
+    }
   }
 
   async deleteChat(
     chatId: Chat['id'],
     userId: User['id'],
   ): Promise<Chat | null> {
-    return await this.chatsService.remove(
-      {
-        id: chatId,
-      },
-      {
-        chatMembers: {
-          where: { userId, isOwner: true }, // Verificar si el usuario es propietario
+    try {
+      return await this.chatsService.remove(
+        {
+          id: chatId,
         },
-      },
-    );
+        {
+          chatMembers: {
+            where: { userId, isOwner: true }, // Verificar si el usuario es propietario
+          },
+        },
+      );
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException();
+    }
   }
 
   async deleteMessage(
@@ -87,10 +104,15 @@ export class ChatListService {
     chatId: Chat['id'],
     userId: User['id'],
   ): Promise<ChatMessage | null> {
-    return await this.chatMessagesService.remove({
-      id: messageId,
-      chatId,
-      userId,
-    });
+    try {
+      return await this.chatMessagesService.remove({
+        id: messageId,
+        chatId,
+        userId,
+      });
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException();
+    }
   }
 }

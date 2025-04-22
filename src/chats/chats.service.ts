@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { Chat, Prisma } from '@prisma/client';
 import { CreateChatListDto } from 'src/chat-list/dto/create-chat-list.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -22,11 +26,12 @@ export class ChatsService {
         },
       });
     } catch (error) {
+      console.error(error);
       if (error.code === 'P2002') {
         // Title duplicado
         throw new ConflictException('Title already exists');
       }
-      throw error;
+      throw new InternalServerErrorException();
     }
   }
 
@@ -58,24 +63,35 @@ export class ChatsService {
         return chat;
       });
     } catch (error) {
+      console.error(error);
       if (error.code === 'P2002') {
         // Title duplicado
         throw new ConflictException('Title already exists');
       }
-      throw error;
+      throw new InternalServerErrorException();
     }
   }
 
   async findAll(): Promise<Chat[]> {
-    return await this.prisma.chat.findMany();
+    try {
+      return await this.prisma.chat.findMany();
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException();
+    }
   }
 
   async findOne(id: Chat['id']): Promise<Chat | null> {
-    return await this.prisma.chat.findUnique({
-      where: {
-        id,
-      },
-    });
+    try {
+      return await this.prisma.chat.findUnique({
+        where: {
+          id,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException();
+    }
   }
 
   async remove(
@@ -88,11 +104,8 @@ export class ChatsService {
         include,
       });
     } catch (error) {
-      if (error.code === 'P2025') {
-        // Registro no encontrado
-        return null;
-      }
-      throw error;
+      console.error(error);
+      throw new InternalServerErrorException();
     }
   }
 }
