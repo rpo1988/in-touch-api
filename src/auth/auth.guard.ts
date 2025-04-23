@@ -1,20 +1,12 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
-export class AuthGuard implements CanActivate {
-  canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest();
-    const userId = request.session.userId;
-    if (!userId) {
-      throw new UnauthorizedException(
-        `User with ID ${userId} is not authenticated`,
-      );
+export class JwtAuthGuard extends AuthGuard('jwt') {
+  handleRequest(err, user) {
+    if (err || !user) {
+      throw err || new UnauthorizedException('Unauthorized');
     }
-    return true;
+    return user;
   }
 }

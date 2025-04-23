@@ -65,17 +65,12 @@ export class ChatListService {
     chatId: Chat['id'],
     userId: User['id'],
   ): Promise<ChatMessage> {
-    try {
-      return await this.chatMessagesService.create({
-        chatId,
-        userId,
-        text,
-        statusId: ChatMessageStatusId.STORED,
-      });
-    } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException();
-    }
+    return await this.chatMessagesService.create({
+      chatId,
+      userId,
+      text,
+      statusId: ChatMessageStatusId.STORED,
+    });
   }
 
   async deleteChat(

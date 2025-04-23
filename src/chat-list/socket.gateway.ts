@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -12,7 +13,7 @@ import { Server, Socket } from 'socket.io';
 @WebSocketGateway({
   cors: {
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true,
+    methods: ['GET', 'POST', 'OPTIONS'],
   },
   namespace: 'chat',
 })
@@ -28,23 +29,33 @@ export class SocketGateway
   @WebSocketServer() server: Server;
   private logger: Logger = new Logger('SocketGateway');
 
+  constructor(private jwtService: JwtService) {}
+
   // Called after the gateway is initialized
   afterInit(/*server: Server*/) {
     this.logger.log('WebSocket Gateway initialized');
   }
 
-  // Called when a client connects
   handleConnection(client: Socket) {
-    const userId = client.handshake.query.userId as string;
-    this.clientMap.set(userId, client.id);
-    this.logger.log(`Client connected: ${userId} <> ${client.id}`);
+    try {
+      const token: string = client.handshake.auth.token;
+      const payload = this.jwtService.verify<{ sub: string; username: string }>(
+        token,
+      );
+      client.data.user = payload;
+      const userId = payload.sub;
+      this.clientMap.set(userId, client.id);
+      this.logger.log(`Client connected: ${userId} <> ${client.id}`);
+    } catch (error) {
+      client.emit('error', { message: 'Unauthorized' });
+      client.disconnect();
+      this.logger.error(`Client connection error: ${error}`);
+    }
   }
 
   // Called when a client disconnects
   handleDisconnect(client: Socket) {
-    const userId = [...this.clientMap.entries()].find(
-      ([, clientId]) => clientId === client.id,
-    )?.[0];
+    const userId: string = client.data.user.sub;
     if (userId) this.clientMap.delete(userId);
     this.logger.log(`Client disconnected: ${userId} <> ${client.id}`);
   }

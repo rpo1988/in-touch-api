@@ -6,11 +6,11 @@ import {
   NotFoundException,
   Param,
   Post,
-  Session,
   UseGuards,
 } from '@nestjs/common';
-import { Chat, ChatMessage, User } from '@prisma/client';
-import { AuthGuard } from 'src/auth/auth.guard';
+import { Chat, ChatMessage } from '@prisma/client';
+import { JwtAuthGuard } from 'src/auth/auth.guard';
+import { UserId } from 'src/auth/userId.decorator';
 import {
   ChatListDetailResponseDto,
   ChatListResponseDto,
@@ -20,7 +20,7 @@ import { CreateChatListDto } from 'src/chat-list/dto/create-chat-list.dto';
 import { ChatListSocketService } from 'src/chat-list/socket.service';
 import { ChatListService } from './chat-list.service';
 
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('api/chat-list')
 export class ChatListController {
   constructor(
@@ -29,8 +29,7 @@ export class ChatListController {
   ) {}
 
   @Get()
-  async findAll(@Session() session: any): Promise<ChatListResponseDto[]> {
-    const userId: User['id'] = session.userId;
+  async findAll(@UserId() userId: string): Promise<ChatListResponseDto[]> {
     const response = await this.chatListService.findAll(userId);
 
     return response || [];
@@ -39,9 +38,8 @@ export class ChatListController {
   @Get(':id')
   async findOne(
     @Param('id') chatId: Chat['id'],
-    @Session() session: any,
+    @UserId() userId: string,
   ): Promise<ChatListDetailResponseDto> {
-    const userId: User['id'] = session.userId;
     const response = await this.chatListService.findOne(chatId, userId);
 
     return response;
@@ -50,9 +48,8 @@ export class ChatListController {
   @Post()
   async createChat(
     @Body() createChatListDto: CreateChatListDto,
-    @Session() session: any,
+    @UserId() userId: string,
   ): Promise<ChatListResponseDto> {
-    const userId: User['id'] = session.userId;
     const response = await this.chatListService.createChat(
       createChatListDto,
       userId,
@@ -64,10 +61,9 @@ export class ChatListController {
   async sendMessage(
     @Body() createChatListMessageDto: CreateChatListMessageDto,
     @Param('id') chatId: Chat['id'],
-    @Session() session: any,
+    @UserId() userId: string,
   ): Promise<ChatMessage> {
     const { text } = createChatListMessageDto;
-    const userId: User['id'] = session.userId;
 
     // Persisto en BBDD
     const response = await this.chatListService.sendMessage(
@@ -77,7 +73,7 @@ export class ChatListController {
     );
 
     // Emito por Socket
-    this.chatListSocketService.emitMessage(response, chatId, userId);
+    this.chatListSocketService.emitSendMessage(response, chatId, userId);
 
     return response;
   }
@@ -85,13 +81,19 @@ export class ChatListController {
   @Delete(':id')
   async deleteChat(
     @Param('id') chatId: Chat['id'],
-    @Session() session: any,
+    @UserId() userId: string,
   ): Promise<Pick<Chat, 'id'>> {
-    const userId: User['id'] = session.userId;
     const response = await this.chatListService.deleteChat(chatId, userId);
 
     if (!response)
       throw new NotFoundException(`Chat with ID ${chatId} not found`);
+
+    // Emito por Socket
+    this.chatListSocketService.emitRemoveChat(
+      { chatId: response.id },
+      chatId,
+      userId,
+    );
 
     return {
       id: chatId,
@@ -102,9 +104,8 @@ export class ChatListController {
   async deleteMessage(
     @Param('id') chatId: Chat['id'],
     @Param('messageId') messageId: ChatMessage['id'],
-    @Session() session: any,
+    @UserId() userId: string,
   ): Promise<Pick<ChatMessage, 'id'>> {
-    const userId: User['id'] = session.userId;
     const response = await this.chatListService.deleteMessage(
       messageId,
       chatId,

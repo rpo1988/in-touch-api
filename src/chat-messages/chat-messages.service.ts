@@ -46,6 +46,21 @@ export class ChatMessagesService {
         statusId,
         text,
       },
+      select: {
+        chatId: true,
+        userId: true,
+        statusId: true,
+        text: true,
+        id: true,
+        createdAt: true,
+        updatedAt: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
   }
 

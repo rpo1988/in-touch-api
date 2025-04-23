@@ -4,14 +4,14 @@ import {
   NotFoundException,
   Param,
   Query,
-  Session,
   UseGuards,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
-import { AuthGuard } from 'src/auth/auth.guard';
+import { JwtAuthGuard } from 'src/auth/auth.guard';
+import { UserId } from 'src/auth/userId.decorator';
 import { UsersService } from 'src/users/users.service';
 
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('api/users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -19,18 +19,16 @@ export class UsersController {
   @Get()
   async findAll(
     @Query('excludeMe') excludeMe: string,
-    @Session() session: any,
+    @UserId() userId: string,
   ): Promise<User[]> {
     const isExcludeMe = excludeMe === 'true' || excludeMe === '1';
-    const userId: User['id'] = session.userId;
     const response = await this.usersService.findAll(isExcludeMe, userId);
 
     return response || [];
   }
 
   @Get('me')
-  async findMe(@Session() session: any): Promise<User> {
-    const userId: User['id'] = session.userId;
+  async findMe(@UserId() userId: string): Promise<User> {
     const response = await this.usersService.findOne(userId);
 
     if (!response)

@@ -9,11 +9,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ChatMessage } from '@prisma/client';
-import { AuthGuard } from 'src/auth/auth.guard';
+import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { ChatMessagesService } from 'src/chat-messages/chat-messages.service';
 import { CreateChatMessageDto } from 'src/chat-messages/dto/create-chat-message.dto';
 
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('api/chat-messages')
 export class ChatMessagesController {
   constructor(private readonly chatMessagesService: ChatMessagesService) {}
