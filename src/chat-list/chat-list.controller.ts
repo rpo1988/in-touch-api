@@ -19,6 +19,7 @@ import { CreateChatListMessageDto } from 'src/chat-list/dto/create-chat-list-mes
 import { CreateChatListDto } from 'src/chat-list/dto/create-chat-list.dto';
 import { ChatListSocketService } from 'src/chat-list/socket.service';
 import { ChatListService } from './chat-list.service';
+import { UnreadMessagesResponseDto } from './dto/unread-messages-response.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('api/chat-list')
@@ -31,7 +32,14 @@ export class ChatListController {
   @Get()
   async findAll(@UserId() userId: string): Promise<ChatListResponseDto[]> {
     const response = await this.chatListService.findAll(userId);
+    return response || [];
+  }
 
+  @Get('unread-messages')
+  async findAllUnreadMessages(
+    @UserId() userId: string,
+  ): Promise<UnreadMessagesResponseDto[]> {
+    const response = await this.chatListService.findAllUnreadMessages(userId);
     return response || [];
   }
 
@@ -41,7 +49,6 @@ export class ChatListController {
     @UserId() userId: string,
   ): Promise<ChatListDetailResponseDto> {
     const response = await this.chatListService.findOne(chatId, userId);
-
     return response;
   }
 

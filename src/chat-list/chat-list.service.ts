@@ -9,6 +9,7 @@ import {
   ChatListDetailResponseDto,
   ChatListResponseDto,
 } from './dto/chat-list-response.dto';
+import { UnreadMessagesResponseDto } from './dto/unread-messages-response.dto';
 
 @Injectable()
 export class ChatListService {
@@ -33,6 +34,17 @@ export class ChatListService {
   ): Promise<ChatListDetailResponseDto> {
     try {
       return await this.chatMembersService.findChatListDetail(chatId, userId);
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException();
+    }
+  }
+
+  async findAllUnreadMessages(
+    userId: User['id'],
+  ): Promise<UnreadMessagesResponseDto[]> {
+    try {
+      return await this.chatMembersService.findUnreadMessages(userId);
     } catch (error) {
       console.error(error);
       throw new InternalServerErrorException();

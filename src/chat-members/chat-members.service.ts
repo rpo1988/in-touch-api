@@ -9,7 +9,9 @@ import {
   ChatListDetailResponseDto,
   ChatListResponseDto,
 } from 'src/chat-list/dto/chat-list-response.dto';
+import { UnreadMessagesResponseDto } from 'src/chat-list/dto/unread-messages-response.dto';
 import { ChatsService } from 'src/chats/chats.service';
+import { ChatMessageStatusId } from 'src/common/enums/chat-messages.enum';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UsersService } from 'src/users/users.service';
 import { CreateChatMemberDto } from './dto/create-chat-member.dto';
@@ -209,6 +211,40 @@ export class ChatMembersService {
         status: itemMessage.chatMessageStatus,
       })),
     };
+    return response;
+  }
+
+  async findUnreadMessages(
+    userId: ChatMember['userId'],
+  ): Promise<UnreadMessagesResponseDto[]> {
+    const data = await this.prisma.chatMember.findMany({
+      where: { userId },
+      select: {
+        chat: {
+          select: {
+            id: true,
+            chatMessages: {
+              select: {
+                id: true,
+              },
+              take: 51, // To optimize it, if there are at least 51 records, we'll show +50
+              where: {
+                statusId: {
+                  not: ChatMessageStatusId.READ,
+                },
+                userId: {
+                  not: userId,
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    const response: UnreadMessagesResponseDto[] = data.map((chatMember) => ({
+      chatId: chatMember.chat.id,
+      unreadMessagesLength: chatMember.chat.chatMessages.length,
+    }));
     return response;
   }
 
