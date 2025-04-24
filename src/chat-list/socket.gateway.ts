@@ -26,7 +26,9 @@ export class SocketGateway
     return this.clientMap;
   }
 
-  @WebSocketServer() server: Server;
+  @WebSocketServer()
+  public server: Server;
+
   private logger: Logger = new Logger('SocketGateway');
 
   constructor(private jwtService: JwtService) {}

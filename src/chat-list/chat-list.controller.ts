@@ -54,6 +54,11 @@ export class ChatListController {
       createChatListDto,
       userId,
     );
+
+    // Emito por Socket
+    const userIds = response.members.map((item) => item.id);
+    this.chatListSocketService.emitCreateChat(response, userIds, userId);
+
     return response;
   }
 
